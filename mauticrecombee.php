@@ -69,11 +69,11 @@ class MauticRecombee extends Module
         $this->registerHook('actionCustomerAccountAdd') &&
         $this->registerHook('productfooter') &&
         $this->registerHook('actionCartSave') &&
+        $this->registerHook('displayHeader') &&
         $this->registerHook('orderConfirmation') &&
         $this->registerHook('authentication') &&
         $this->registerHook($hookFooter);
     }
-
 
     public function uninstall()
     {
@@ -245,6 +245,30 @@ class MauticRecombee extends Module
         $initAuth = new \Mautic\Auth\ApiAuth();
 
         return $initAuth->newAuth($settings, $settings['AuthMethod']);
+    }
+
+
+    public function hookDisplayHeader($params)
+    {
+        if (Tools::getValue('controller') == 'order' && !Tools::getValue('step') && Tools::getValue('set_cart')) {
+            $cart = Context::getContext()->cart;
+            $products = $cart->getProducts();
+            foreach ($products as $product) {
+                $cart->deleteProduct($product["id_product"], $product["id_product_attribute"]);
+            }
+            $cartItems = explode(',',Tools::getValue('set_cart'));
+            foreach ($cartItems as $cartItem) {
+                $iPa = null;
+                if (count(explode('-', $cartItem)) == 2) {
+                    list($idProduct, $iPa) = explode('-', $cartItem);
+                }else{
+                    $idProduct = $cartItem;
+                }
+                $cart->updateQty(1, $idProduct, $iPa);
+            }
+            $currentUrl = Tools::getCurrentUrlProtocolPrefix().$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
+            Tools::redirect(str_replace('set_cart','filled_cart', $currentUrl));
+        }
     }
 
     public function hookActionAuthentication($params)
