@@ -53,8 +53,8 @@ class MauticRecombee extends Module
 
         parent::__construct();
 
-        $this->displayName = $this->l('Mautic Recoombee integration for Prestashop');
-        $this->description = $this->l('Integration Mautic Recoombee to Prestashop');
+        $this->displayName = $this->l('Mautic Recombee integration for Prestashop');
+        $this->description = $this->l('Integration Mautic Recombee to Prestashop');
     }
 
     public function install()
@@ -70,7 +70,7 @@ class MauticRecombee extends Module
         $this->registerHook('productfooter') &&
         $this->registerHook('actionCartSave') &&
         $this->registerHook('displayHeader') &&
-        $this->registerHook('orderConfirmation') &&
+        $this->registerHook('actionValidateOrder') &&
         $this->registerHook('authentication') &&
         $this->registerHook($hookFooter);
     }
@@ -283,7 +283,6 @@ class MauticRecombee extends Module
 
     public function hookActionCartSave($params)
     {
-
         $cart     = $this->context->cart;
         $customer = $this->context->customer;
         $leadId   = $this->getLeadId();
@@ -335,14 +334,14 @@ class MauticRecombee extends Module
     /**
      * @param $params
      */
-    public function hookOrderConfirmation($params)
+    public function hookActionValidateOrder($params)
     {
         if (isset($params['objOrder'])) {
             $order = $params['objOrder'];
         } else {
             $order = $params['order'];
         }
-        if (Validate::isLoadedObject($order) && $order->getCurrentState() != (int) Configuration::get('PS_OS_ERROR')) {
+        if (Validate::isLoadedObject($order)) {
             $cartProducts = $order->getProducts();
             if (count($cartProducts)) {
                 foreach ($cartProducts as $cartProduct) {
@@ -388,6 +387,7 @@ class MauticRecombee extends Module
 
     public function hookDisplayFooter()
     {
+
         return $this->getTrackingCode();
     }
 
@@ -505,7 +505,7 @@ class MauticRecombee extends Module
     {
         if (Configuration::get(self::MAUTICRECOMBEE_TRACKING_CODE)) {
             return "<script>
-    (function(w,d,t,u,n,a,m){w['MauticTrackingObject']=n;
+      (function(w,d,t,u,n,a,m){w['MauticTrackingObject']=n;
         w[n]=w[n]||function(){(w[n].q=w[n].q||[]).push(arguments)},a=d.createElement(t),
         m=d.getElementsByTagName(t)[0];a.async=1;a.src=u;m.parentNode.insertBefore(a,m)
     })(window,document,'script','".$this->getUrl()."/mtc.js','mt');
